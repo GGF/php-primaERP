@@ -239,13 +239,14 @@ class ApiClient extends \Ease\Brick
     {
         $this->curl = \curl_init(); // create curl resource
         curl_setopt($this->curl, CURLOPT_RETURNTRANSFER, true); // return content as a string from curl_exec
-        curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true); // follow redirects (compatibility for future changes in IPEX)
-        curl_setopt($this->curl, CURLOPT_HTTPAUTH, true);       // HTTP authentication
+        //curl_setopt($this->curl, CURLOPT_FOLLOWLOCATION, true); // follow redirects (compatibility for future changes in IPEX)
+        // redirection remove some headers (Authorization)
+        curl_setopt($this->curl, CURLOPT_HTTPAUTH, CURLAUTH_ANY );       // HTTP authentication, NOT BOOL! MUST BE BIT MASK
         curl_setopt($this->curl, CURLOPT_SSL_VERIFYPEER, false); // IPEX by default uses Self-Signed certificates
         curl_setopt($this->curl, CURLOPT_SSL_VERIFYHOST, false);
         curl_setopt($this->curl, CURLOPT_VERBOSE, ($this->debug === true)); // For debugging
-        curl_setopt($this->curl, CURLOPT_USERPWD,
-            $this->user.':'.$this->password); // set username and password
+        //curl_setopt($this->curl, CURLOPT_USERPWD,            $this->user.':'.$this->password); // set username and password
+        // Perhaps since 2017, authorization has changed, now it is transmitted in the header.
     }
 
     /**
@@ -535,13 +536,16 @@ class ApiClient extends \Ease\Brick
 
         $httpHeaders = $this->defaultHttpHeaders;
 
+        if (!isset($httpHeaders['Authorization'])) {
+            $httpHeaders['Authorization'] = 'Basic ' . base64_encode($this->user . ':' . $this->password);
+        }
         if (!isset($httpHeaders['Accept'])) {
             $httpHeaders['Accept'] = 'application/json';
         }
         if (!isset($httpHeaders['Content-Type'])) {
             $httpHeaders['Content-Type'] = 'application/json';
         }
-        $httpHeadersFinal = [];
+        $httpHeadersFinal = array();
         foreach ($httpHeaders as $key => $value) {
             if (($key == 'User-Agent') && ($value == 'php-primaERP')) {
                 $value .= ' v'.self::$libVersion;
@@ -550,12 +554,15 @@ class ApiClient extends \Ease\Brick
         }
 
         curl_setopt($this->curl, CURLOPT_HTTPHEADER, $httpHeadersFinal);
+        curl_setopt($this->curl, CURLINFO_HEADER_OUT, true); // show real header        
+
 
 // Proveď samotnou operaci
         $this->lastCurlResponse            = curl_exec($this->curl);
         $this->curlInfo                    = curl_getinfo($this->curl);
         $this->curlInfo['when']            = microtime();
-        $this->curlInfo['request_headers'] = $httpHeadersFinal;
+        //$this->curlInfo['request_headers'] = $httpHeadersFinal;
+        // CURLINFO_HEADER_OUT show real header
         $this->responseMimeType            = $this->curlInfo['content_type'];
         $this->lastResponseCode            = $this->curlInfo['http_code'];
         $this->lastCurlError               = curl_error($this->curl);
