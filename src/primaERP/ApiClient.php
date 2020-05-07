@@ -13,7 +13,7 @@ namespace primaERP;
  *
  * @url http://devdoc.primaerp.com/
  */
-class ApiClient extends \Ease\Brick
+class ApiClientgit
 {
     /**
      * Version of php-primaerp library
@@ -209,6 +209,24 @@ class ApiClient extends \Ease\Brick
 
         if (!empty($init)) {
             $this->processInit($init);
+        }
+    }
+
+    /**
+     * Set up one of properties
+     *
+     * @param array  $options  array of given properties
+     * @param string $name     name of property to process
+     * @param string $constant load default property value from constant
+     */
+    public function setupProperty($options, $name, $constant = null)
+    {
+        if (isset($options[$name])) {
+            $this->$name = $options[$name];
+        } else {
+            if (is_null($this->$name) && !empty($constant) && defined($constant)) {
+                $this->$name = constant($constant);
+            }
         }
     }
 
@@ -446,6 +464,25 @@ class ApiClient extends \Ease\Brick
         return $this->addUrlParams($urlRaw, $this->defaultUrlParams, false);
     }
 
+
+    /**
+     * Přidá zprávu do sdíleného zásobníku pro zobrazení uživateli.
+     *
+     * @param string $message  Text zprávy
+     * @param string $type     Fronta zpráv (warning|info|error|success)
+     *
+     * @return
+     */
+    public function addStatusMessage($message, $type = 'info')
+    {
+       // from easy framework
+       /*
+        return Shared::instanced()->takeMessage(new Logger\Message($message,
+                    $type, $this));
+                    */
+        return $message;
+    }
+
     /**
      * Parse primaERP API Response
      *
@@ -479,7 +516,7 @@ class ApiClient extends \Ease\Brick
             case 201: //Success Write
                 if (isset($responseDecoded[$this->resultField][0]['id'])) {
                     $this->lastInsertedID = $responseDecoded[$this->resultField][0]['id'];
-                    $this->setMyKey($this->lastInsertedID);
+                    //$this->setMyKey($this->lastInsertedID); // for easy frameworkit important, for me no
                     $this->apiURL         = $this->getSectionURL().'/'.$this->lastInsertedID;
                 } else {
                     $this->lastInsertedID = null;
@@ -580,7 +617,8 @@ class ApiClient extends \Ease\Brick
 
     public function loadFromAPI($key)
     {
-        return $this->takeData($this->requestData($key));
+        //return $this->takeData($this->requestData($key)); 
+        return $this->requestData($key);
     }
 
     /**

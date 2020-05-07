@@ -10,8 +10,7 @@
     ],
     "require": {
         "php": ">= 7.0",
-        "ext-curl": "*",
-        "vitexsoftware/ease-framework": "dev-master"
+        "ext-curl": "*"
     },
     "autoload": {
         "psr-4": {
