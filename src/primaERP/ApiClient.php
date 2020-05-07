@@ -13,8 +13,16 @@ namespace primaERP;
  *
  * @url http://devdoc.primaerp.com/
  */
-class ApiClientgit
+class ApiClient
 {
+    /**
+     * Common object data holder. 
+     * from Sand.php
+     *
+     * @var array
+     */
+    public $data = null;
+
     /**
      * Version of php-primaerp library
      *
@@ -199,7 +207,7 @@ class ApiClientgit
     {
         $this->init = $init;
 
-        parent::__construct();
+        //parent::__construct();
         $this->setUp($options);
         $this->curlInit();
 
@@ -516,7 +524,7 @@ class ApiClientgit
             case 201: //Success Write
                 if (isset($responseDecoded[$this->resultField][0]['id'])) {
                     $this->lastInsertedID = $responseDecoded[$this->resultField][0]['id'];
-                    //$this->setMyKey($this->lastInsertedID); // for easy frameworkit important, for me no
+                    $this->setMyKey($this->lastInsertedID);
                     $this->apiURL         = $this->getSectionURL().'/'.$this->lastInsertedID;
                 } else {
                     $this->lastInsertedID = null;
@@ -615,10 +623,80 @@ class ApiClientgit
         return $this->lastResponseCode;
     }
 
+    /**
+     * Vrací hodnotu z pole dat pro MySQL.
+     *
+     * @param string $columnName název hodnoty/sloupečku
+     *
+     * @return mixed
+     */
+    public function getDataValue($columnName)
+    {
+        if (isset($this->data[$columnName])) {
+            return $this->data[$columnName];
+        }
+
+        return;
+    }
+
+    /**
+     * Nastaví hodnotu poli objektu.
+     * from Sand.php
+     *
+     * @param string $columnName název datové kolonky
+     * @param mixed  $value      hodnota dat
+     *
+     * @return bool Success
+     */
+    public function setDataValue($columnName, $value)
+    {
+        $this->data[$columnName] = $value;
+
+        return true;
+    }
+
+    /**
+     * Nastavuje hodnotu klíčového políčka pro SQL.
+     *
+     * @param int|string $myKeyValue
+     *
+     * @return bool
+     */
+    public function setMyKey($myKeyValue)
+    {
+        if (isset($this->keyColumn)) {
+            $this->setDataValue($this->keyColumn, $myKeyValue);
+            $result = true;
+        } else {
+            $result = false;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Převezme data do aktuálního pole dat.
+     * from Sand.php
+     *
+     * @param array $data asociativní pole dat
+     *
+     * @return int
+     */
+    public function takeData($data)
+    {
+        if (is_array($this->data) && is_array($data)) {
+            $this->data = array_merge($this->data, $data);
+        } else {
+            $this->data = $data;
+        }
+
+        return empty($data) ? null : count($data);
+    }
+
+
     public function loadFromAPI($key)
     {
-        //return $this->takeData($this->requestData($key)); 
-        return $this->requestData($key);
+        return $this->takeData($this->requestData($key)); 
     }
 
     /**
